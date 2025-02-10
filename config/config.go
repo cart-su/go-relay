@@ -6,14 +6,14 @@ import (
 	"os"
 )
 
-var Config configuration
+var Config Configuration
 
-type configuration struct {
+type Configuration struct {
 	ListenRange string `json:"listen_ip"`
 	Port        int    `json:"port"`
 }
 
-func init() {
+func LoadConfig() {
 	file, err := os.ReadFile("config.json")
 	if err != nil {
 		log.Fatalf("%s", err.Error())
