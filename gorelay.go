@@ -21,7 +21,7 @@ type configuration struct {
 type incomingRequest struct {
 	URL  string `json:"url"`
 	Body string `json:"body"` // assume if this is empty, the request is GET
-	Type string `json:"content-type"`
+	Type string `json:"content_type"`
 }
 
 func proxyRequest(w http.ResponseWriter, r *http.Request) {
@@ -32,6 +32,7 @@ func proxyRequest(w http.ResponseWriter, r *http.Request) {
 
 	request, err := io.ReadAll(r.Body)
 	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte(fmt.Sprintf("Error encountered while reading request to proxy: %s", err.Error())))
 		return
 	}
@@ -39,6 +40,7 @@ func proxyRequest(w http.ResponseWriter, r *http.Request) {
 	var incomingJson incomingRequest
 	err = json.Unmarshal(request, &incomingJson)
 	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte(fmt.Sprintf("Error encountered while deserializing request to JSON: %s", err.Error())))
 		return
 	}
@@ -48,6 +50,7 @@ func proxyRequest(w http.ResponseWriter, r *http.Request) {
 	client := http.Client{Timeout: 60 * time.Second}
 	req, err := http.NewRequest(http.MethodPost, incomingJson.URL, reqBody)
 	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte(fmt.Sprintf("Error from server: %s", err.Error())))
 		return
 	}
@@ -66,6 +69,7 @@ func proxyRequest(w http.ResponseWriter, r *http.Request) {
 
 	resp, err := client.Do(req)
 	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte(fmt.Sprintf("Error retrieving response from server: %s", err.Error())))
 		return
 	}
@@ -73,6 +77,7 @@ func proxyRequest(w http.ResponseWriter, r *http.Request) {
 
 	responseBody, err := io.ReadAll(resp.Body)
 	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte(fmt.Sprintf("Error retrieving response from server: %s", err.Error())))
 		return
 	}
