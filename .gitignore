@@ -2,3 +2,5 @@
 .vscode/launch.json
 go-relay
 __debug*
+relay.log
+*.log
