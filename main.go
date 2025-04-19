@@ -19,7 +19,7 @@ func main() {
 
 	s := api.NewServer()
 	api.SetRoutes(s.Engine)
-	log.Printf("Server is running %s:%v\n", config.Config.ListenRange, config.Config.Port)
+	log.Printf("Server is running %v\n", config.Config.Port)
 
 	if err := s.Run(); err != nil {
 		log.Fatal(err)

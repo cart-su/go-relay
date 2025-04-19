@@ -84,14 +84,15 @@ func proxyRequest(c *gin.Context) {
 	}
 	defer resp.Body.Close()
 
-	responseBody, err := io.ReadAll(resp.Body)
-	if err != nil {
-		c.Writer.WriteHeader(http.StatusBadRequest)
-		c.Writer.Write([]byte(fmt.Sprintf("Error retrieving response from server: %s", err.Error())))
-		return
+	// copy the headers and content from the response exactly
+	c.Writer.WriteHeader(resp.StatusCode)
+	for k, vv := range resp.Header {
+		for _, v := range vv {
+			c.Writer.Header().Add(k, v)
+		}
 	}
 
-	c.Writer.Write(responseBody)
+	io.Copy(c.Writer, resp.Body)
 }
 
 func NewServer() *Server {
@@ -148,10 +149,14 @@ func (s *Server) Run() error {
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	go func() {
-		if err := s.server.ListenAndServeTLS(s.certFile, s.keyFile); err != nil && err != http.ErrServerClosed {
+		if err := s.server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Printf("Error starting server: %v", err)
 			quit <- syscall.SIGTERM
 		}
+		/*if err := s.server.ListenAndServeTLS(s.certFile, s.keyFile); err != nil && err != http.ErrServerClosed {
+			log.Printf("Error starting server: %v", err)
+			quit <- syscall.SIGTERM
+		}*/
 	}()
 
 	<-quit
